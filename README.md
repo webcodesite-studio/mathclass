@@ -85,7 +85,7 @@ npm run dev
 
 ## Deploy na Ubuntu
 
-Szczegółowe instrukcje krok po kroku: **[INSTRUCTIONS.txt](INSTRUCTIONS.txt)**
+Szczegółowe instrukcje krok po kroku: **[INSTRUCTIONS.txt](/mathclass/INSTRUCTIONS.txt)**
 
 ---
 
