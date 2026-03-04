@@ -112,4 +112,3 @@ Szczegółowe instrukcje krok po kroku: **[INSTRUCTIONS.txt](INSTRUCTIONS.txt)**
 ## Licencja
 
 MIT
-  # (poprosi o hasło)
