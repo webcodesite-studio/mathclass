@@ -1,194 +1,335 @@
-# MathClass - System Zadań Matematycznych
+================================================================
+  MATHCLASS — INSTRUKCJA INSTALACJI NA UBUNTU 22.04 / 24.04
+================================================================
 
-Kompletna aplikacja do zarządzania zadaniami matematycznymi dla uczniów z Docker + PostgreSQL.
+WYMAGANIA WSTĘPNE:
+  - Serwer Ubuntu 22.04 lub 24.04
+  - Dostęp root lub sudo
+  - Min. 1 GB RAM, 10 GB dysku
 
-## 🎯 Cechy
+================================================================
+KROK 1 — AKTUALIZACJA SYSTEMU
+================================================================
 
-- ✅ **Unikalnych 6 zadań losowo** dla każdego ucznia
-- ✅ **Base64 zdjęcia w bazie** (eleganckie rozwiązanie)
-- ✅ **PostgreSQL w Docker**
-- ✅ **Panel nauczyciela** do zarządzania uczniami i zadaniami
-- ✅ **System sesji** z limitem czasowym
-- ✅ **Statystyki uczniów** w rzeczywistym czasie
-- ✅ **Responsywny UI** - działa na telefonie i desktopie
+  sudo apt update && sudo apt upgrade -y
 
-## 🚀 Szybki Start
 
-### Wymagania
-- Docker i Docker Compose
-- Git (opcjonalnie)
+================================================================
+KROK 2 — INSTALACJA NODE.JS 20
+================================================================
 
-### Instalacja
+  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  sudo apt install -y nodejs
+  
+  # Sprawdź wersję (powinna być 20.x):
+  node --version
 
-```bash
-# 1. Klonuj lub skopiuj pliki projektu
-cd mathclass
 
-# 2. Uruchom Docker Compose
-docker-compose up -d
+================================================================
+KROK 3 — INSTALACJA POSTGRESQL
+================================================================
 
-# Czekaj ~30 sekund na uruchomienie PostgreSQL
-sleep 30
+  sudo apt install -y postgresql postgresql-contrib
+  sudo systemctl enable postgresql
+  sudo systemctl start postgresql
 
-# 3. Sprawdź status
-docker-compose ps
-```
+  # Utwórz bazę danych i użytkownika:
+  sudo -u postgres psql << 'EOF'
+  CREATE USER mathclass_user WITH PASSWORD 'TWOJE_HASLO_DO_BAZY';
+  CREATE DATABASE mathclass OWNER mathclass_user;
+  GRANT ALL PRIVILEGES ON DATABASE mathclass TO mathclass_user;
+  \q
+  EOF
 
-### Dostęp do aplikacji
-- **Frontend**: http://localhost:3000
-- **API**: http://localhost:3001/api/health
-- **PostgreSQL**: localhost:5432
+  WAŻNE: Zapamiętaj hasło — będzie potrzebne w pliku .env
 
-### Dane logowania (seed)
 
-**Nauczyciel (Admin):**
-- Login: `admin`
-- Hasło: `admin123`
+================================================================
+KROK 4 — IMPORT SCHEMATU BAZY
+================================================================
 
-**Uczniowie (już istnieją):**
-- Login: `jan_1a` / Hasło: `haslo123`
-- Login: `maria_1a` / Hasło: `haslo123`
-- Login: `piotr_1b` / Hasło: `haslo123`
+  # Skopiuj plik mathclass_schema.sql na serwer, potem:
+  sudo -u postgres psql mathclass < mathclass_schema.sql
 
-## 📁 Struktura plików
+  # Lub jeśli używasz mathclass_user:
+  psql -U mathclass_user -d mathclass -h localhost < mathclass_schema.sql
+  # (poprosi o hasło)
 
-```
-mathclass/
-├── docker-compose.yml      # Konfiguracja Docker
-├── init.sql                # SQL schema + seed data
-├── server.js               # Backend Node.js/Express
-├── package.json            # Zależności backendu
-├── Dockerfile              # Image backendu
-├── Dockerfile.frontend     # Image frontendu
-├── App.jsx                 # React frontend
-└── .gitignore             # Git config
-```
 
-## 🔧 Przydatne komendy
+================================================================
+KROK 5 — INSTALACJA NGINX
+================================================================
 
-```bash
-# Pokaż logi
-docker-compose logs -f
+  sudo apt install -y nginx
+  sudo systemctl enable nginx
+  sudo systemctl start nginx
 
-# Logi konkretnego serwisu
-docker-compose logs -f api
-docker-compose logs -f postgres
 
-# Wejście do PostgreSQL
-docker exec -it mathclass-db psql -U mathclass_user -d mathclass
+================================================================
+KROK 6 — INSTALACJA PM2 (menedżer procesów Node.js)
+================================================================
 
-# Restart serwisów
-docker-compose restart
+  sudo npm install -g pm2
+  pm2 startup systemd
+  # Skopiuj i wykonaj polecenie które PM2 wyświetli!
 
-# Wyłącz wszystko
-docker-compose down
 
-# Wyłącz i usuń dane (!!!)
-docker-compose down -v
-```
+================================================================
+KROK 7 — PRZESŁANIE PLIKÓW NA SERWER
+================================================================
 
-## 💾 Baza danych
+  Na lokalnym komputerze wykonaj:
 
-### Tabele
-- `users` - uczniowie i nauczyciele
-- `classes` - klasy
-- `tasks` - zadania (ze zdj. w BASE64!)
-- `answers` - rozwiązania uczniów
-- `sessions` - sesje logowania
+  # Zbuduj frontend:
+  cd frontend
+  npm install
+  npm run build
+  # Powstanie folder frontend/dist/
 
-### Kluczowe cechy
-- Obrazki przechowywane jako **BASE64 TEXT** w kolumnie `image_data`
-- Automatyczne generowanie loginów dla uczniów
-- System sesji z limitem czasu
-- Widok `student_stats` do statystyk
+  # Wyślij pliki na serwer (zamień USER i IP):
+  scp -r backend/         USER@IP:/tmp/mathclass-backend/
+  scp -r frontend/dist/   USER@IP:/tmp/mathclass-frontend/
+  scp ecosystem.config.js USER@IP:/tmp/
 
-## 🎓 Jak używać
 
-### Dla nauczyciela
-1. Zaloguj się jako admin
-2. Przejdź do "📝 Zadania"
-3. Dodaj nowe zadania lub prześlij obrazki
-4. Zarządzaj uczniami w "👥 Uczniowie"
-5. Przeglądaj statystyki w "📊 Statystyki"
+================================================================
+KROK 8 — ROZMIESZCZENIE PLIKÓW NA SERWERZE
+================================================================
 
-### Dla ucznia
-1. Zaloguj się (np. jan_1a/haslo123)
-2. Dostaniesz losowych 6 zadań
-3. Wpisz odpowiedź i kliknij "Sprawdź"
-4. Błędna odpowiedź = kara czasowa 10s (2. próba 20s, itd.)
-5. Poprawna = nowe zadanie pojawi się automatycznie
+  Na serwerze Ubuntu:
 
-## 🖼️ Dodawanie zdjęć do zadań
+  # Utwórz strukturę katalogów:
+  sudo mkdir -p /var/www/mathclass/frontend
+  sudo mkdir -p /var/www/mathclass/backend
+  sudo mkdir -p /var/www/mathclass/uploads
 
-Zdjęcia są automatycznie konwertowane na Base64 i przechowywane w bazie:
+  # Skopiuj pliki:
+  sudo cp -r /tmp/mathclass-backend/*   /var/www/mathclass/backend/
+  sudo cp -r /tmp/mathclass-frontend/*  /var/www/mathclass/frontend/
+  sudo cp /tmp/ecosystem.config.js      /var/www/mathclass/
 
-```javascript
-// Frontend - user wybiera plik
-// Plik jest konwertowany na Base64
-// Wysyłany do API
-// API przechowuje jako TEXT w `image_data`
-// Frontend wyświetla: <img src={task.image_data} />
-```
+  # Ustaw właściciela:
+  sudo chown -R $USER:$USER /var/www/mathclass/
 
-## 🔐 Bezpieczeństwo (production)
 
-**Dla produkcji zmień:**
-1. Hasło PostgreSQL w `docker-compose.yml`
-2. Dodaj JWT authentication w `server.js`
-3. Zmień PASSWORD w `init.sql`
-4. Dodaj HTTPS/SSL
-5. Ustaw Environment variables zamiast hardcoded
+================================================================
+KROK 9 — KONFIGURACJA BACKENDU (.env)
+================================================================
 
-## 🐛 Troubleshooting
+  cd /var/www/mathclass/backend
+  cp .env.example .env
+  nano .env
 
-**Błąd: "Brak połączenia z bazą"**
-```bash
-docker-compose logs postgres
-docker-compose restart postgres
-```
+  Uzupełnij plik — zmień wartości:
+  ─────────────────────────────────────────────────────────────
+  DB_HOST=localhost
+  DB_PORT=5432
+  DB_NAME=mathclass
+  DB_USER=mathclass_user
+  DB_PASSWORD=TWOJE_HASLO_DO_BAZY        ← zmień to!
 
-**Błąd: "Port 5432 już zajęty"**
-```bash
-# Zmień port w docker-compose.yml
-# Z "5432:5432" na "5433:5432"
-```
+  JWT_SECRET=LOSOWY_STRING_MIN_32_ZNAKI  ← zmień to!
+  # Przykład JWT_SECRET: openssl rand -hex 32
 
-**Zdjęcia się nie wysyłają**
-- Sprawdź rozmiar pliku (maks 50MB)
-- Użyj JPEG lub PNG
-- Sprawdź konsolę przeglądarki (F12)
+  PORT=3001
 
-## 📊 API Endpoints
+  UPLOADS_DIR=/var/www/mathclass/uploads
+  API_URL=http://TWOJ_IP_LUB_DOMENA     ← zmień to!
+  ─────────────────────────────────────────────────────────────
 
-```
-POST   /api/login              # Zaloguj się
-POST   /api/register           # Zarejestruj się
-GET    /api/classes            # Lista klas
-GET    /api/users?role=student # Lista uczniów
-GET    /api/tasks              # Wszystkie zadania
-GET    /api/tasks-for-student  # Losowych 6 dla ucznia
-POST   /api/add-task           # Dodaj zadanie
-POST   /api/add-tasks-bulk     # Dodaj wiele
-PATCH  /api/tasks/:id          # Edytuj zadanie
-DELETE /api/tasks/:id          # Usuń zadanie
-POST   /api/submit-answer      # Prześlij odpowiedź
-GET    /api/student-stats      # Statystyki
-```
+  # Wygeneruj bezpieczny JWT_SECRET:
+  openssl rand -hex 32
 
-## 🎨 Personalizacja
 
-Zmień kolory w `App.jsx`:
-```javascript
-// Kolory w obiekcie S (na dole pliku)
-S.root       // Tło główne
-S.card       // Karty
-S.inp        // Inputy
-```
+================================================================
+KROK 10 — INSTALACJA ZALEŻNOŚCI BACKENDU
+================================================================
 
-## 📝 Licencja
+  cd /var/www/mathclass/backend
+  npm install --omit=dev
 
-Projekt edukacyjny - użytkowaj swobodnie!
 
----
+================================================================
+KROK 11 — URUCHOMIENIE BACKENDU PRZEZ PM2
+================================================================
 
-**Pytania? Problemy?** Sprawdź logi lub kontaktuj supportu.
+  cd /var/www/mathclass
+  pm2 start ecosystem.config.js
+  pm2 save
+
+  # Sprawdź status:
+  pm2 status
+  pm2 logs mathclass-api
+
+  # Powinieneś zobaczyć:
+  # "MathClass API running on port 3001"
+
+  # Test API:
+  curl http://localhost:3001/api/health
+  # Powinno zwrócić: {"ok":true}
+
+
+================================================================
+KROK 12 — KONFIGURACJA NGINX
+================================================================
+
+  # Skopiuj konfigurację:
+  sudo cp /tmp/mathclass-backend/../nginx/mathclass.conf \
+       /etc/nginx/sites-available/mathclass
+
+  # LUB utwórz ręcznie:
+  sudo nano /etc/nginx/sites-available/mathclass
+
+  Wklej i dostosuj (zmień IP/domenę):
+  ─────────────────────────────────────────────────────────────
+  server {
+      listen 80;
+      server_name TWOJ_IP;   # lub np. mathclass.szkola.pl
+
+      root /var/www/mathclass/frontend;
+      index index.html;
+
+      location / {
+          try_files $uri $uri/ /index.html;
+      }
+
+      location /api/ {
+          proxy_pass       http://localhost:3001;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+      }
+
+      location /uploads/ {
+          alias /var/www/mathclass/uploads/;
+          expires 30d;
+      }
+
+      client_max_body_size 10M;
+  }
+  ─────────────────────────────────────────────────────────────
+
+  # Aktywuj konfigurację:
+  sudo ln -s /etc/nginx/sites-available/mathclass \
+             /etc/nginx/sites-enabled/
+
+  # Usuń domyślną stronę nginx (opcjonalnie):
+  sudo rm -f /etc/nginx/sites-enabled/default
+
+  # Sprawdź poprawność:
+  sudo nginx -t
+
+  # Przeładuj nginx:
+  sudo systemctl reload nginx
+
+
+================================================================
+KROK 13 — UPRAWNIENIA DO KATALOGU UPLOADS
+================================================================
+
+  sudo chown -R www-data:www-data /var/www/mathclass/uploads
+  sudo chmod 755 /var/www/mathclass/uploads
+
+  # Backend też potrzebuje dostępu:
+  sudo usermod -aG www-data $USER
+  sudo chown -R $USER:www-data /var/www/mathclass/uploads
+
+
+================================================================
+KROK 14 — FIREWALL (opcjonalnie)
+================================================================
+
+  sudo ufw allow 22    # SSH
+  sudo ufw allow 80    # HTTP
+  sudo ufw allow 443   # HTTPS (jeśli będziesz mieć SSL)
+  sudo ufw enable
+
+
+================================================================
+KROK 15 — SPRAWDZENIE DZIAŁANIA
+================================================================
+
+  Otwórz przeglądarkę: http://TWOJ_IP
+
+  Zaloguj się:
+  - Login: admin   Hasło: admin   → Panel Administratora
+  - Login: piotr   Hasło: piotr   → Panel Nauczyciela
+
+  !! WAŻNE: Zmień hasła domyślnych kont po pierwszym logowaniu !!
+
+
+================================================================
+SSL / HTTPS (opcjonalnie, wymaga domeny)
+================================================================
+
+  sudo apt install -y certbot python3-certbot-nginx
+  sudo certbot --nginx -d twoja-domena.pl
+  sudo systemctl reload nginx
+
+  # Odnowienie certyfikatu (automatyczne):
+  sudo certbot renew --dry-run
+
+
+================================================================
+AKTUALIZACJA APLIKACJI
+================================================================
+
+  # 1. Na lokalnym komputerze zbuduj nowy frontend:
+  cd frontend && npm run build
+
+  # 2. Wyślij na serwer:
+  scp -r frontend/dist/* USER@IP:/var/www/mathclass/frontend/
+
+  # 3. Jeśli zmieniał się backend:
+  scp -r backend/*.js backend/routes/ USER@IP:/var/www/mathclass/backend/
+  # Na serwerze:
+  pm2 restart mathclass-api
+
+
+================================================================
+ROZWIĄZYWANIE PROBLEMÓW
+================================================================
+
+  Problem: Strona nie ładuje się
+  → sudo nginx -t               # sprawdź konfigurację nginx
+  → sudo systemctl status nginx # sprawdź czy nginx działa
+  → curl http://localhost/      # sprawdź lokalnie
+
+  Problem: API nie odpowiada
+  → pm2 status                  # sprawdź status procesu
+  → pm2 logs mathclass-api      # logi błędów
+  → curl http://localhost:3001/api/health
+
+  Problem: Błąd bazy danych
+  → sudo systemctl status postgresql
+  → psql -U mathclass_user -d mathclass -h localhost
+  → Sprawdź hasło w pliku .env
+
+  Problem: Upload obrazków nie działa
+  → ls -la /var/www/mathclass/uploads/   # sprawdź uprawnienia
+  → sudo chown -R www-data:www-data /var/www/mathclass/uploads
+
+  Logi:
+  → pm2 logs mathclass-api --lines 50
+  → sudo tail -f /var/log/nginx/error.log
+  → sudo journalctl -u postgresql -n 50
+
+
+================================================================
+BACKUP BAZY DANYCH
+================================================================
+
+  # Backup:
+  pg_dump -U mathclass_user -d mathclass > backup_$(date +%Y%m%d).sql
+
+  # Przywracanie:
+  psql -U mathclass_user -d mathclass < backup_YYYYMMDD.sql
+
+  # Automatyczny backup (cron):
+  crontab -e
+  # Dodaj linię (backup o 2:00 w nocy):
+  0 2 * * * pg_dump -U mathclass_user mathclass > /var/backups/mathclass_$(date +\%Y\%m\%d).sql
+
+
+================================================================
+  Projekt: MathClass | github.com/mat-jan
+================================================================
