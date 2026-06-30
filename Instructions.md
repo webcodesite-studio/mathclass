@@ -233,8 +233,6 @@ Certbot automatycznie zaktualizuje konfigurację Nginx i ustawi auto-odnowienie 
 | Login    | Hasło    | Rola       |
 |----------|----------|------------|
 | `admin`  | `admin`  | superadmin |
-| `piotr`  | `piotr`  | nauczyciel |
-| `monika` | `monika` | nauczyciel |
 
 > ⚠️ **Zmień hasła natychmiast po pierwszym uruchomieniu!**
 
