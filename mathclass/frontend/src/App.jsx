@@ -810,7 +810,7 @@ function EdStud({ user, cls, onSave, onCancel }) {
   return (
     <div style={{ ...S.card, border: "2px solid #0ea5e9", padding: 16 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: 10 }}>
-        <div><Lb>Imię</Lb><In v={n} s={setN} /></div>
+        <div><Lb>Numer w dzienniku np 01 03 itd</Lb><In v={n} s={setN} /></div>
         <div><Lb>Klasa</Lb><select value={c} onChange={e => setC(e.target.value)} style={S.inp}><option value="">brak</option>{cls.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></div>
         <div><Lb>Hasło</Lb><In v={p} s={setP} /></div>
         <div><Lb>Sesja (min)</Lb><In type="number" v={m} s={setM} ph="∞" /></div>
