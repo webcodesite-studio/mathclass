@@ -76,8 +76,6 @@ npm run dev
 | Login   | Hasło   | Rola        |
 |---------|---------|-------------|
 | `admin` | `admin` | superadmin  |
-| `piotr` | `piotr` | nauczyciel  |
-| `monika`| `monika`| nauczyciel  |
 
 > ⚠️ Zmień hasła po pierwszym uruchomieniu!
 
