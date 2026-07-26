@@ -1,0 +1,24 @@
+# ── Sekrety — NIGDY nie commituj ────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ── Node ─────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ── Build frontendu ──────────────────────────────────────────────
+frontend/dist/
+frontend/build/
+
+# ── Upload (pliki użytkowników) ──────────────────────────────────
+backend/uploads/
+uploads/
+
+# ── Logi ────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── macOS ────────────────────────────────────────────────────────
+.DS_Store
