@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 router.get("/", async (req, res) => {
   try {
     const { role, order, select, limit } = req.query;
-    let q = `SELECT u.*, c.name AS class_name FROM users u LEFT JOIN classes c ON c.id = u.class_id WHERE 1=1`;
+    let q = `SELECT u.id, u.username, u.name, u.role, u.class_id, u.active, u.session_minutes, u.session_locked, u.remaining_seconds, c.name AS class_name FROM users u LEFT JOIN classes c ON c.id = u.class_id WHERE 1=1`;
     const params = [];
     if (role) { params.push(role); q += ` AND u.role = $${params.length}`; }
     q += ` ORDER BY u.name ASC`;
@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT u.*, c.name AS class_name FROM users u LEFT JOIN classes c ON c.id = u.class_id WHERE u.id = $1`,
+      `SELECT u.id, u.username, u.name, u.role, u.class_id, u.active, u.session_minutes, u.session_locked, u.remaining_seconds, c.name AS class_name FROM users u LEFT JOIN classes c ON c.id = u.class_id WHERE u.id = $1`,
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: "Nie znaleziono." });
