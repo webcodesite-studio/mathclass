@@ -32,9 +32,8 @@ router.delete("/", async (req, res) => {
   try {
     const { user_id } = req.query;
     if (!user_id) {
-      // Nuke all — tylko superadmin powinien to wywoływać
-      await pool.query("DELETE FROM answers");
-    } else {
+  return res.status(400).json({ error: "Brak user_id." });
+} else {
       await pool.query("DELETE FROM answers WHERE user_id = $1", [user_id]);
     }
     res.json({ ok: true });
