@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const pool = require("../db");
-const { requireRole } = require("../middleware/auth");
 
 // GET /api/stats/students  — odpowiednik widoku student_stats
 router.get("/students", async (req, res) => {
@@ -32,7 +31,7 @@ router.get("/students", async (req, res) => {
 });
 
 // GET /api/stats/db  — liczniki do panelu admina
-router.get("/db", requireRole("superadmin"), async (req, res) => {
+router.get("/db", async (req, res) => {
   try {
     const [u, t, a, cl, ca] = await Promise.all([
       pool.query("SELECT role FROM users"),

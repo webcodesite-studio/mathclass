@@ -41,8 +41,7 @@ router.post("/", async (req, res) => {
 
 router.patch("/:id", async (req, res) => {
   try {
-    const ALLOWED = ["question", "answer", "category", "difficulty", "active", "image_url"];
-    const fields = Object.keys(req.body).filter(f => ALLOWED.includes(f));
+    const fields = Object.keys(req.body);
     if (!fields.length) return res.status(400).json({ error: "Brak danych." });
     const vals = fields.map((f, i) => `${f} = $${i + 1}`).join(", ");
     const params = [...fields.map(f => req.body[f]), req.params.id];
