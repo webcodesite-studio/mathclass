@@ -86,7 +86,7 @@ router.patch("/:id", async (req, res) => {
     if (body.password_hash) {
       body.password_hash = await bcrypt.hash(body.password_hash, 10);
     }
-    const ALLOWED = ["username", "name", "password_hash", "role",
+    const ALLOWED = ["username", "name", "password_hash",
                  "class_id", "active", "session_minutes", "session_locked"];
     const fields = Object.keys(body).filter(f => ALLOWED.includes(f));
     if (!fields.length) return res.status(400).json({ error: "Brak danych." });

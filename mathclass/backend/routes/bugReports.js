@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const pool = require("../db");
+const { auth, requireRole } = require("../middleware/auth");
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "";
 
@@ -25,7 +26,7 @@ async function notifyDiscordBugReport(report) {
 }
 
 // GET /api/bug-reports
-router.get("/", async (req, res) => {
+router.get("/", auth, requireRole("superadmin", "admin"), async (req, res) => {
   try {
     const { status } = req.query;
     let q = "SELECT * FROM bug_reports WHERE 1=1";
@@ -53,7 +54,7 @@ router.post("/", async (req, res) => {
 });
 
 // PATCH /api/bug-reports/:id
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", auth, requireRole("superadmin", "admin"), async (req, res) => {
   try {
     const { status } = req.body;
     const { rows } = await pool.query(
@@ -65,7 +66,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // DELETE /api/bug-reports/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, requireRole("superadmin", "admin"), async (req, res) => {
   try {
     await pool.query("DELETE FROM bug_reports WHERE id = $1", [req.params.id]);
     res.json({ ok: true });
