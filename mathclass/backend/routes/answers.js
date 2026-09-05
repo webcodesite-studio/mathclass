@@ -30,13 +30,15 @@ router.post("/", async (req, res) => {
 // DELETE /api/answers?user_id=xxx  (wyczyść statystyki ucznia)
 router.delete("/", async (req, res) => {
   try {
-    const { user_id } = req.query;
-    if (!user_id) {
-      // Nuke all — tylko superadmin powinien to wywoływać
-      await pool.query("DELETE FROM answers");
-    } else {
-      await pool.query("DELETE FROM answers WHERE user_id = $1", [user_id]);
+if (!req.query.user_id && req.user.role !== "superadmin") {
+      return res.status(403).json({ error: "Brak uprawnień." });
     }
+    if (!req.query.user_id && req.user.role === "superadmin") {
+      await pool.query("DELETE FROM answers");
+      return res.json({ ok: true });
+    }
+    const user_id = req.user.role === "student" ? req.user.userId : req.query.user_id;
+    await pool.query("DELETE FROM answers WHERE user_id = $1", [user_id]);
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

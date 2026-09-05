@@ -5,7 +5,7 @@ const pool = new Pool({
   port:     parseInt(process.env.DB_PORT || "5432"),
   database: process.env.DB_NAME     || "mathclass",
   user:     process.env.DB_USER     || "mathclass_user",
-  password: process.env.DB_PASSWORD || "",
+  password: process.env.DB_PASSWORD,
 });
 
 pool.on("error", (err) => {

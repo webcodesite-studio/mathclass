@@ -389,6 +389,7 @@ function Student({ user, onLogout }) {
   const [fb, setFb] = useState({});
   const [cd, setCd] = useState({});
   const [tl, setTl] = useState(null);
+  const tlRef = useRef(null);
   const [exp, setExp] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [remainingCount, setRemainingCount] = useState(0);
@@ -425,7 +426,9 @@ function Student({ user, onLogout }) {
     if (!user.exp) return;
     const tick = async () => {
       const left = Math.max(0, new Date(user.exp) - Date.now());
-      setTl(Math.ceil(left / 1000));
+      const remaining = Math.ceil(left / 1000);
+      setTl(remaining);
+      tlRef.current = remaining;
       if (left <= 0 && !exp) {
         setExp(true);
         await api.del("category-assignments", null, { target_type: "user", target_id: user.id });
@@ -433,7 +436,20 @@ function Student({ user, onLogout }) {
         if (user.sid) await api.patch("sessions", user.sid, { active: false, locked_at: new Date().toISOString() });
       }
     };
-    tick(); const iv = setInterval(tick, 1000); return () => clearInterval(iv);
+    tick(); const iv = setInterval(tick, 1000);
+
+const handleUnload = () => {
+  if (user?.sid) {
+    const body = JSON.stringify({ sid: user.sid, remaining_seconds: tlRef.current });
+    navigator.sendBeacon("/api/auth/logout", new Blob([body], { type: "application/json" }));
+  }
+};
+
+window.addEventListener("beforeunload", handleUnload);
+return () => {
+  clearInterval(iv);
+  window.removeEventListener("beforeunload", handleUnload);
+};
   }, [user.exp]);
 
   useEffect(() => {

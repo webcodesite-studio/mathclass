@@ -5,10 +5,12 @@ const fs = require("fs");
 
 const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, "..", "uploads");
 
+const ALLOWED_EXT = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
+    const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `task_${Date.now()}${ext}`);
   },
 });
@@ -17,8 +19,11 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Tylko obrazki!"));
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (file.mimetype.startsWith("image/") && ALLOWED_EXT.includes(ext))
+      cb(null, true);
+    else
+      cb(new Error("Tylko obrazki (jpg, png, gif, webp)!"));
   },
 });
 
